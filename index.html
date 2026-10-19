@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f3f8fb">
+<title>Escape Room: Sklopovlje i vrste računala</title>
+<style>
+:root{--bg:#f3f8fb;--pn:#ffffff;--g:#0b8a4b;--c:#0069a8;--m:#c2185b;--r:#d32f2f;--t:#14323f;--ln:#cfdde6}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}body{margin:0;min-height:100vh;min-height:100dvh;background:var(--bg);color:var(--t);font:16px/1.5 "Courier New",monospace;padding:env(safe-area-inset-top) env(safe-area-inset-right) calc(env(safe-area-inset-bottom) + 16px) env(safe-area-inset-left);touch-action:manipulation}
+#app{max-width:640px;margin:auto;padding:10px 12px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;position:sticky;top:0;background:var(--bg);padding:8px 0;z-index:5;border-bottom:1px solid var(--ln)}.top>div:first-child{min-width:0}
+#tm{font-size:1.6rem;font-weight:bold;color:var(--g);font-variant-numeric:tabular-nums;flex:none}#tm.lo{color:var(--r);animation:b 1s infinite}
+@keyframes b{50%{opacity:.4}}
+.bar{height:8px;background:#dbe7ee;border-radius:4px;margin:6px 0}.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--c),var(--g));border-radius:4px;transition:width .4s}
+.card{background:var(--pn);border:1px solid var(--c);border-radius:10px;padding:14px;margin:10px 0;box-shadow:0 2px 10px #0069a81f}
+.card.door{border-color:var(--m);box-shadow:0 2px 10px #c2185b33}
+h1,h2{color:var(--c);margin:.2em 0}h1{font-size:1.3rem;line-height:1.25;overflow-wrap:anywhere}h2{font-size:1.15rem}
+.room{color:var(--m);font-size:.8rem;letter-spacing:.5px;font-weight:bold}
+button,select,input{font:inherit;width:100%;min-height:52px;border-radius:10px;border:2px solid var(--g);background:#fff;color:var(--t);padding:8px 10px;margin:5px 0;font-size:16px}
+button{background:#e3f6ec;color:var(--g);font-weight:bold;cursor:pointer}button:active{transform:scale(.98);background:#c8ecd8}
+button.s{width:auto;min-height:46px;border-color:var(--c);color:var(--c);background:#fff;font-size:.9rem;padding:4px 14px;margin:4px 0}
+button:disabled{opacity:.4}button.d{border-color:var(--r);color:var(--r);background:#fdeaea}
+.it{border-left:3px solid var(--c);padding:6px 8px;margin:8px 0;background:#0069a80d;border-radius:0 8px 8px 0}.it.bad{border-color:var(--r);background:#d32f2f18}
+.fb{padding:10px;border-radius:8px;margin:8px 0}.fb.ok{background:#0b8a4b1c;border:1px solid var(--g)}.fb.no{background:#d32f2f1a;border:1px solid var(--r)}.hn{background:#ffe5804d;border:1px solid #d9a400;padding:8px;border-radius:8px;margin:6px 0}
+.inv{display:flex;flex-wrap:wrap;gap:6px}.chip{border:1px solid var(--m);color:var(--m);padding:4px 8px;border-radius:6px;font-size:.85rem}.chip b{color:var(--t);font-size:1.1rem}
+.big{font-size:3rem;text-align:center}.rl{width:100%;font-size:.75rem;opacity:.7;margin-top:4px}@media(max-width:380px){body{font-size:15px}#tm{font-size:1.4rem}h1{font-size:1.15rem}.card{padding:12px}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const KEY='escape_sklopovlje_v3',TOTAL=2700,LAST=14,PASS='121231234';
+const $=id=>document.getElementById(id);
+const AD=['A/D (analogno → digitalno)','D/A (digitalno → analogno)'];
+const ROOMS=['SOBA 1: TAVAN HARDVERSKOG LABA','SOBA 2: UNUTRAŠNJOST RAČUNALNOG TORNJA','SOBA 3: GLAVNA SERVER SOBA'];
+const STORY=['Prašnjavi tavan laboratorija. Na stolovima leže ulazni i izlazni uređaji, a na zidu visi pokvarena matična ploča. Svaka riješena zagonetka daje jednu znamenku. Kad skupiš sve četiri, upiši ih na vratima sobe.',
+'Smanjen si i stojiš unutar računalnog tornja. Ventilatori huje, čipovi trepću, a napajanje iskri. Opet skupi četiri znamenke i otvori vrata.',
+'Hladna server soba, trepćuća svjetla poslužitelja. Skupi posljednje četiri znamenke, a zatim na glavnim vratima upiši master kod od svih 12 znamenki.'];
+const DOORQ=['Vrata sobe 1 traže 4-znamenkasti kod: znamenke tragova iz ove sobe, redom (otvori inventar).','Vrata sobe 2 traže 4-znamenkasti kod: znamenke tragova iz SOBE 2, redom.','GLAVNA VRATA: upiši 12-znamenkasti master kod, znamenke svih 12 tragova redom od 1. do 12.'];
+const door=(i)=>({n:i<2?'Vrata sobe '+(i+1):'Glavna vrata servera',c:'',d:null,door:1,s:i<2?'Čelična vrata s brojčanom bravom blokiraju izlaz.':'Posljednja barijera između tebe i slobode.',st:[{t:'n',txt:1,door:1,q:DOORQ[i]}],h:['Otvori inventar. Svaki trag ima svoju znamenku.',i<2?'Čitaj znamenke redom kojim si ih skupljao u ovoj sobi.':'Prvo 4 znamenke iz sobe 1, pa sobe 2, pa sobe 3.'],e:i<2?'Brava je kliknula. Vrata se otvaraju!':'Master kod prihvaćen!'});
+const P=[
+{n:'Pretvorba signala',c:'Binarna kartica',d:3,s:'Digitalna brava traži da razvrstaš uređaje. Računalo razumije samo 0 i 1, a svijet oko nas je analogan.',
+ st:[{t:'c',q:'Koji uređaj pretvara analogni signal u digitalni (A/D), a koji digitalni u analogni (D/A)?',cats:AD,items:[['Mikrofon',0],['Skener',0],['Web kamera',0],['Monitor',1],['Zvučnici',1],['Pisač',1]]},
+ {t:'n',q:'Od šest uređaja (mikrofon, skener, web kamera, monitor, zvučnici, pisač) koliko ih radi D/A pretvorbu?',a:[3]}],
+ h:['Ulazni uređaji unose stvarni svijet (zvuk, sliku) u računalo.','Mikrofon, skener i kamera = A/D. Monitor, zvučnici i pisač prikazuju ili ispisuju rezultat = D/A.'],
+ e:'Ulazni uređaji rade A/D pretvorbu, a izlazni (monitor, zvučnici, pisač) D/A pretvorbu.'},
+{n:'Matematika miša i DPI',c:'Kartica kurzora',d:1,s:'Na stolu leži miš s naljepnicom 1000 DPI. Brava traži točan broj.',
+ st:[{t:'n',q:'Miš ima osjetljivost 1000 DPI (Dots Per Inch). Koliko točaka kurzor prijeđe ako miš pomaknemo za 2.54 cm (1 inč)?',a:[1000]},
+ {t:'n',q:'Drugi miš ima 800 DPI. Koliko točaka kurzor prijeđe ako ga pomaknemo za 2 inča?',a:[1600]}],
+ h:['DPI = točaka po inču.','Točke = DPI × inči.'],
+ e:'DPI znači točaka po inču. 1000 DPI × 1 inč = 1000 točaka, a 800 DPI × 2 inča = 1600 točaka.'},
+{n:'Specifikacije i zasloni',c:'Kartica tehnologija',d:4,s:'Pet pojmova svijetli na zidu. Spoji svaki opis s točnim pojmom.',
+ st:[{t:'c',q:'Spoji opis s pojmom:',cats:['OLED','144 Hz','Laserski pisač','Termalni pisač','ANC slušalice'],items:[['Pikseli se gase za crnu boju i ne troše energiju',0],['Glatko osvježavanje slike za gejming',1],['Toner prah zapečen na više od 200 °C',2],['Računi na papiru osjetljivom na toplinu',3],['Poništavanje buke zvučnim valom suprotne faze',4]]}],
+ h:['Hz je broj osvježavanja zaslona u sekundi.','Termalni pisač ne koristi tintu ni toner, samo toplinu.'],
+ e:'OLED: svaki piksel svijetli sam. 144 Hz: 144 osvježavanja u sekundi. Laser: toner se zapeče toplinom. Termalni pisač: papir reagira na toplinu. ANC: val suprotne faze poništava buku.'},
+{n:'Interaktivna matična ploča',c:'Kartica matične ploče',d:1,s:'Matična ploča je mrtva. Spoji komponente na njihova mjesta da zatvoriš strujni krug.',
+ st:[{t:'c',q:'Na koji utor/priključak ide koja komponenta?',cats:['CPU Socket','RAM DIMM utori','PCIe x16','24-pinski ATX naponski ulaz','SATA / M.2'],items:[['Procesor (CPU)',0],['RAM moduli',1],['Grafička kartica',2],['Kabel iz napajanja za matičnu ploču',3],['SSD / HDD',4]]},
+ {t:'t',q:'Sustav se upalio, ali čip koji nosi BIOS/UEFI ima kratko ime od tri slova za trajnu memoriju. Kako se zove? (tri slova)',a:['rom']}],
+ h:['Grafička kartica treba najbrži utor, onaj najduži.','Trajna memorija koja se samo čita: R _ M.'],
+ e:'CPU ide u socket, RAM u DIMM utore, grafička u PCIe x16, napajanje ploče u 24-pinski ATX ulaz, a SSD/HDD na SATA ili M.2. BIOS/UEFI je u ROM-u.'},
+door(0),
+{n:'RAM protiv ROM-a',c:'Memorijski čip',d:5,s:'Dvije brave, RAM i ROM. Razvrstaj tvrdnje.',
+ st:[{t:'c',q:'Kojoj memoriji pripada tvrdnja?',cats:['RAM','ROM'],items:[['Radna, privremena memorija',0],['Gašenjem računala gubi se sadržaj (volatilna)',0],['Sadrži BIOS/UEFI',1],['Trajna memorija',1],['Provodi POST test i pokreće sustav',1]]}],
+ h:['Volatilna znači hlapljiva, nestaje bez struje.','BIOS/UEFI mora preživjeti isključivanje.'],
+ e:'RAM je radna i volatilna memorija. ROM je trajna i sadrži BIOS/UEFI koji pokreće POST test.'},
+{n:'Frekvencija i napajanje',c:'Kartica napajanja',d:9,s:'Napajanje (PSU) iskri i traži provjeru. Tri provjere.',
+ st:[{t:'n',q:'Procesor radi na 3.5 GHz. Koliko milijardi taktova u sekundi to znači? (1 GHz = 1 milijarda taktova u sekundi)',a:[3.5]},
+ {t:'n',q:'Drugi procesor radi na 4 GHz. Koliko milijardi taktova napravi u 2 sekunde?',a:[8]},
+ {t:'c',q:'PSU pretvara 230 V iz utičnice u niske napone. Koja je vrsta struje?',cats:['Izmjenična (AC)','Istosmjerna (DC)'],items:[['230 V iz zidne utičnice',0],['+12 V prema komponentama',1],['+5 V prema komponentama',1],['+3.3 V prema komponentama',1]]}],
+ h:['1 GHz = 1 milijarda taktova.','Komponente računala rade na istosmjernoj struji.'],
+ e:'3.5 GHz je 3.5 milijardi taktova u sekundi. PSU pretvara 230 V izmjenične struje u istosmjerne +12 V, +5 V i +3.3 V.'},
+{n:'Povezivanje namjene',c:'Kartica namjene',d:2,s:'Četiri scenarija čekaju točnu vrstu računala.',
+ st:[{t:'c',q:'Koja je vrsta računala?',cats:['Procesno računalo','Ugradbeno (embedded)','Poslužitelj (server)','Osobno računalo (PC)'],items:[['Robotička lakirnica automobila (radi 24/7 bez monitora i tipkovnice)',0],['Perilica rublja i pametni sat',1],['e-Dnevnik i mrežne usluge',2],['Rad i učenje kod kuće',3]]}],
+ h:['Računalo skriveno u uređaju je ugradbeno.','Računalo koje služi drugim računalima preko mreže je poslužitelj.'],
+ e:'Procesno računalo upravlja proizvodnjom, ugradbeno je skriveno u uređaju, poslužitelj pruža mrežne usluge, a PC je računalo opće namjene.'},
+{n:'Snaga i performanse',c:'Kartica performansi',d:6,s:'Odaberi pravi stroj za svaki znanstveni zadatak.',
+ st:[{t:'c',q:'Koje računalo odgovara zadatku?',cats:['Superračunalo','Mainframe','Radna stanica (Workstation)'],items:[['Vremenska prognoza i simulacija klime podjelom posla na tisuće jezgri',0],['Tisuće bankovnih transakcija u sekundi',1],['3D dizajn i modeliranje za inženjere',2]]}],
+ h:['Podjela posla na tisuće jezgri = paralelno računanje.','Banke trebaju pouzdanost i puno transakcija.'],
+ e:'Superračunala dijele posao na tisuće jezgri, mainframe obrađuje ogroman broj transakcija, a radna stanica je moćno računalo za inženjere i 3D dizajn.'},
+door(1),
+{n:'Binarni svijet',c:'Binarna šifra',d:5,s:'Zidom teku nule i jedinice. Računalo broji samo u binarnom sustavu.',
+ st:[{t:'n',q:'Pretvori binarni broj 1101 u dekadski.',a:[13]},{t:'n',q:'Koliko različitih vrijednosti može pohraniti 1 bajt (8 bitova)?',a:[256]}],
+ h:['1101 = 8 + 4 + 0 + 1. Težine su 8, 4, 2, 1.','Svaki bit ima 2 stanja pa je 2 × 2 × ... osam puta.'],
+ e:'1101 = 8+4+1 = 13. Bajt ima 8 bitova pa je 2^8 = 256 mogućih vrijednosti.'},
+{n:'Jedinice pohrane',c:'Kartica pohrane',d:3,s:'Poslužitelji su puni diskova. Provjeri znaš li veličine.',
+ st:[{t:'n',q:'1 KB = koliko bajtova (binarno računanje)?',a:[1024]},
+ {t:'c',q:'Poredaj jedinice od najmanje (1.) do najveće (4.):',cats:['1. (najmanja)','2.','3.','4. (najveća)'],items:[['KB',0],['MB',1],['GB',2],['TB',3]]}],
+ h:['Svaka sljedeća jedinica je 1024 puta veća.','Redoslijed: KB, MB, GB, TB.'],
+ e:'1 KB = 1024 B. Redoslijed jedinica je KB < MB < GB < TB.'},
+{n:'Redoslijed pokretanja',c:'Boot kartica',d:5,s:'Poslužitelj se ne diže. Postavi korake pokretanja računala u pravi redoslijed.',
+ st:[{t:'c',q:'Odredi koji je korak po redu (1. do 5.):',cats:['1. korak','2. korak','3. korak','4. korak','5. korak'],items:[['Pritisak na tipku, napajanje daje napon',0],['POST test sklopovlja',1],['BIOS/UEFI traži uređaj za podizanje sustava',2],['Učitavanje operacijskog sustava',3],['Prikaz radne površine / prijave',4]]}],
+ h:['Prvo struja, zadnje što vidiš je radna površina.','POST provjerava hardver prije nego BIOS traži disk.'],
+ e:'Napajanje, POST, BIOS/UEFI traži disk, učitava se OS i prikazuje se radna površina.'},
+{n:'Šifrirane kratice',c:'Kartica kratica',d:8,s:'Zadnji terminal traži znanje kratica.',
+ st:[{t:'c',q:'Spoji kraticu s opisom:',cats:['Središnja procesorska jedinica','Grafička procesorska jedinica','Poluvodički disk bez pokretnih dijelova','Jedinica za napajanje','Unified Extensible Firmware Interface'],items:[['CPU',0],['GPU',1],['SSD',2],['PSU',3],['UEFI',4]]},
+ {t:'t',q:'Napiši na engleskom što znači RAM (tri riječi).',a:['random access memory']}],
+ h:['PSU = Power Supply Unit.','R _ _ _ _ M  A _ _ _ _ _  M _ _ _ _ _'],
+ e:'RAM je Random Access Memory, radna memorija računala.'},
+door(2)
+];
+let s;
+function shuf(n){const a=[...Array(n).keys()];for(let i=n-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function mk(){const st=P[s.p].st[s.step];if(st.t=='c'){s.cp=shuf(st.cats.length);s.ip=shuf(st.items.length)}else{s.cp=s.ip=null}}
+function fresh(){return{p:0,step:0,inv:[],t:TOTAL,hints:0,wrong:0,done:0,hl:0,fb:null,start:1,intro:1,lk:1}}
+function load(){try{s=JSON.parse(localStorage.getItem(KEY))||fresh()}catch(e){s=fresh()}
+ if(!s||typeof s.p!=='number'||s.p<0||s.p>LAST||!Array.isArray(s.inv)||typeof s.t!=='number'||!P[s.p]||!Number.isInteger(s.step)||s.step<0||s.step>=P[s.p].st.length||!Number.isInteger(s.hl)||s.hl<0||s.hl>2){s=fresh()}
+ if(s.t>TOTAL)s.t=TOTAL;
+ const st=P[s.p].st[s.step];if(st.t=='c'&&(!s.cp||!s.ip||s.cp.length!=st.cats.length||s.ip.length!=st.items.length))mk()}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(s))}catch(e){}}
+const fmt=x=>{x=Math.max(0,Math.floor(x));return String(Math.floor(x/60)).padStart(2,'0')+':'+String(x%60).padStart(2,'0')};
+let last=Date.now();
+setInterval(()=>{const n=Date.now(),d=(n-last)/1000;last=n;if(s.start||s.lk||s.done||s.t<=0||document.hidden)return;s.t-=Math.min(d,5);const e=$('tm');if(e){e.textContent=fmt(s.t);e.className=s.t<300?'lo':''}if(s.t<=0){s.t=0;save();R()}else save()},1000);
+document.addEventListener('visibilitychange',()=>{last=Date.now()});
+function reset(){if(confirm('Sigurno? Sav napredak će biti izbrisan.')){localStorage.removeItem(KEY);s=fresh();s.start=1;R()}}
+function go(){s.start=0;last=Date.now();save();R()}
+function unlock(){const v=($('pw').value||'').replace(/\s/g,'');if(v===PASS){s.lk=0;last=Date.now();save();R()}else{s.wrong++;save();const m=$('lkm');m.className='fb no';m.textContent='❌ Pogrešna lozinka. Pokušaj ponovno.';$('pw').value='';$('pw').focus()}}
+function enter(){s.intro=0;last=Date.now();save();R()}
+function esc(x){return String(x).replace(/&/g,'&amp;').replace(/</g,'&lt;')}
+function invHtml(){return '<div class="card"><h2>🎒 Inventar</h2><div class="inv">'+(s.inv.length?s.inv.map((c,i)=>'<div class="chip">'+(i+1)+'. '+esc(c.n)+' → <b>'+c.d+'</b></div>').join(''):'<span style="opacity:.6">Prazan. Rješavaj zagonetke i skupljaj tragove.</span>')+'</div></div>'}
+function doorCode(){const r=Math.floor(s.p/5);return s.inv.filter(c=>s.p==LAST||c.r==r).map(c=>c.d).join('')}
+function R(){
+ const A=$('app');
+ if(s.start){A.innerHTML='<div class="card"><div class="big">🔐</div><h1>ESCAPE ROOM: SKLOPOVLJE I SUSTAVI</h1><p>Zaključan si u hardverskom labu. Prođi 3 sobe, u svakoj riješi 4 zagonetke, skupi znamenke i otvori vrata. Na kraju te čeka master kod.</p><p>⏱ Imaš <b>45 minuta</b>. Napredak se sprema automatski, a tajmer stoji dok je igra zatvorena.</p><button onclick="go()">'+(s.p||s.inv.length?'▶ NASTAVI':'▶ POKRENI IGRU')+'</button>'+(s.p||s.inv.length?'<button class="s d" onclick="reset()">↺ Resetiraj igru</button>':'')+'</div>';return}
+ if(s.lk){A.innerHTML='<div class="card door"><div class="big">🔒</div><h1>SOBA 1 JE ZAKLJUČANA</h1><p>Teška čelična vrata laboratorija blokiraju ulaz. Upiši lozinku da ih otključaš. Tajmer će krenuti tek kad uđeš.</p><input id="pw" type="password" inputmode="numeric" placeholder="Lozinka" autocomplete="off" onkeydown="if(event.key===\'Enter\')unlock()"><button onclick="unlock()">🔑 OTKLJUČAJ</button><div id="lkm"></div><button class="s d" onclick="reset()">↺ Resetiraj igru</button></div>';return}
+ if(s.done){const u=TOTAL-s.t;A.innerHTML='<div class="card"><div class="big">🏆</div><h1>BIJEG USPJEŠAN!</h1><div class="chip" style="font-size:1.1rem;display:block;text-align:center;margin:10px 0">🏅 Master Sklopovlja i Sustava</div><p>⏱ Vrijeme: <b>'+fmt(u)+'</b><br>💡 Iskorišteni hintovi: <b>'+s.hints+'</b><br>❌ Pogrešni pokušaji: <b>'+s.wrong+'</b><br>🧩 Zagonetki riješeno: <b>12/12</b><br>🚪 Soba otvoreno: <b>3/3</b></p></div>'+invHtml()+'<button class="d" onclick="reset()">↺ Igraj ponovno</button>';return}
+ if(s.t<=0){A.innerHTML='<div class="card"><div class="big">⏰</div><h1>VRIJEME ISTEKLO</h1><p>Pokušaj ponovno!</p></div><button class="d" onclick="reset()">↺ Kreni ispočetka</button>';return}
+ const p=P[s.p],st=p.st[s.step],ro=Math.floor(s.p/5);
+ const top='<div class="top"><div><div class="room">'+ROOMS[ro]+'</div><small>'+(p.door?'🚪 Vrata':'Zagonetka '+(s.p-ro+(p.door?0:1)-(ro?0:0))+'/12')+'</small></div><div id="tm" class="'+(s.t<300?'lo':'')+'">'+fmt(s.t)+'</div></div><div class="bar"><i style="width:'+(s.p/15*100)+'%"></i></div>';
+ if(s.intro){A.innerHTML=top+'<div class="card door"><div class="big">'+(ro?'🚪':'🔓')+'</div><h2>'+(ro?'Vrata su se otvorila! ':'')+ROOMS[ro]+'</h2><p>'+STORY[ro]+'</p><button onclick="enter()">UĐI U SOBU ➜</button></div>'+invHtml();return}
+ let h=top;
+ h+='<div class="card'+(p.door?' door':'')+'"><h2>'+(p.door?'🔒 ':'🧩 ')+p.n+'</h2>'+(s.step?'':'<p>'+p.s+'</p>')+(p.st.length>1?'<small>Korak '+(s.step+1)+'/'+p.st.length+'</small>':'')+'<p><b>'+st.q+'</b></p>';
+ if(st.t=='c'){s.ip.forEach(i=>{const it=st.items[i],bad=s.fb&&s.fb.bad&&s.fb.bad.includes(i);h+='<div class="it'+(bad?' bad':'')+'">'+it[0]+'<select id="s'+i+'"><option value="">-- odaberi --</option>'+s.cp.map(j=>'<option value="'+j+'">'+st.cats[j]+'</option>').join('')+'</select></div>'})}
+ else h+='<input id="in" inputmode="'+(st.txt?'numeric':st.t=='t'?'text':'decimal')+'" placeholder="Upiši odgovor" autocomplete="off">';
+ h+='<button onclick="chk()">PROVJERI ✔</button>';
+ if(s.fb)h+='<div class="fb '+(s.fb.ok?'ok':'no')+'">'+s.fb.m+'</div>';
+ for(let i=0;i<s.hl;i++)h+='<div class="hn">💡 Hint '+(i+1)+': '+p.h[i]+'</div>';
+ h+='<button class="s" onclick="hint()" '+(s.hl>=2?'disabled':'')+'>💡 Pomoć ('+s.hl+'/2)</button></div>'+invHtml()+'<button class="s d" onclick="reset()">↺ Kreni ispočetka / Resetiraj</button>';
+ A.innerHTML=h;
+ if(st.t=='c'&&s.sel)st.items.forEach((_,i)=>{if(s.sel[i]!==undefined&&s.sel[i]!==null)$('s'+i).value=s.sel[i]});
+ if(s.inp&&$('in'))$('in').value=s.inp;
+ if(s.fb){const f=document.querySelector('.fb');if(f)f.scrollIntoView({block:'center'})}
+}
+function hint(){if(s.hl<2){s.hl++;s.hints++;keep();save();R()}}
+function keep(){const st=P[s.p].st[s.step];if(st.t=='c'){s.sel=st.items.map((_,i)=>$('s'+i)?.value)}else s.inp=$('in')?.value}
+function chk(){
+ const p=P[s.p],st=p.st[s.step];let ok=0,bad=[];
+ if(st.t=='c'){st.items.forEach((it,i)=>{if($('s'+i).value!==String(it[1]))bad.push(i)});ok=!bad.length;s.sel=st.items.map((_,i)=>$('s'+i).value)}
+ else{const raw=$('in').value.trim();s.inp=raw;
+  if(st.t=='t'){ok=st.a.includes(raw.toLowerCase().replace(/\s+/g,' '))}
+  else if(st.txt){ok=raw.replace(/\s/g,'')===doorCode()}
+  else{const v=raw.replace(',','.').replace(/\s/g,'');ok=st.a.includes(parseFloat(v))&&/^[0-9.]+$/.test(v)}}
+ if(!ok){s.wrong++;s.fb={ok:0,bad,m:st.t=='c'?'❌ Neke tvrdnje nisu točne ('+bad.length+' označeno crveno). Pokušaj ponovno.':'❌ Netočan odgovor. Pokušaj ponovno ili iskoristi pomoć.'};save();R();return}
+ s.fb=null;s.sel=null;s.inp=null;
+ if(s.step<p.st.length-1){s.step++;mk();save();R();return}
+ s.step=0;s.hl=0;
+ const ro=Math.floor(s.p/5);
+ if(p.d!==null)s.inv.push({n:p.c,d:p.d,r:ro});
+ const lastP=s.p==LAST;if(lastP)s.done=1;else s.p++;
+ const nr=!lastP&&s.p%5==0;if(nr)s.intro=1;
+ if(!lastP)mk();save();
+ if(lastP){R();return}
+ $('app').innerHTML='<div class="card"><div class="big">'+(p.door?'🔓':'✅')+'</div><h2>'+(p.door?'Brava otključana!':'Točno!')+'</h2><div class="fb ok">📘 '+p.e+'</div>'+(p.d!==null?'<p>🗝 Novi trag u inventaru: <b>'+p.c+' → '+p.d+'</b></p>':'')+'<button onclick="R()">DALJE ➜</button></div>'+invHtml();
+}
+load();R();
+</script>
+</body>
+</html>
